@@ -1,0 +1,135 @@
+// This file defines the data contracts (messages) for your Axiom package.
+// Every node's --input and --output refers to a message defined here.
+//
+// Run `axiom create message <Name>` to scaffold a new message below.
+// Run `axiom generate` to compile these definitions into language bindings in gen/.
+//
+// DOCUMENTATION
+//   Comments written directly above a message or field declaration are extracted
+//   automatically at publish time and shown in the Axiom registry as documentation.
+//   Write your descriptions there — no separate doc files needed.
+//
+//   Leading comment  (no blank line before the declaration) → registry description ✓
+//   Detached comment (blank line before the declaration)    → ignored by registry  ✗
+//
+// This file is yours to edit. Axiom only appends new message blocks — it never
+// overwrites or removes content you have written.
+
+syntax = "proto3";
+
+package christiangeorgelucas.spell_tools;
+
+// Shared request envelope for every node in this package. Which fields matter
+// depends on the node: CorrectWord and CheckWord read only `text` (+
+// max_edit_distance / top_n where relevant) and expect a single token with no
+// whitespace; CorrectPhrase and FindMisspellings read `text` (+
+// max_edit_distance / top_n) and expect a whitespace-separated phrase;
+// SegmentText reads `text` (+ max_edit_distance / max_segment_length) and
+// expects a run-together string with little or no whitespace. Unused fields
+// are ignored by a given node.
+message SpellQuery {
+  // The word, phrase, or run-together string to process. Required, non-empty,
+  // and capped per node (see each node's description for its exact limit).
+  string text = 1;
+  // Maximum Damerau-Levenshtein edit distance a correction/segmentation may
+  // use, 0-2. 0 means "exact/known-word matches only" (no fuzzy correction).
+  // Unset (field absence) defaults to 2, the package's compiled maximum.
+  optional int32 max_edit_distance = 2;
+  // Maximum number of ranked candidates to return per word. Used by
+  // CorrectWord and FindMisspellings only; ignored elsewhere. Unset defaults
+  // to 5; capped at 20.
+  optional int32 top_n = 3;
+  // Maximum length, in characters, of any single word SegmentText will
+  // consider when splitting a run-together string. Used by SegmentText only;
+  // ignored elsewhere. Unset defaults to 20.
+  optional int32 max_segment_length = 4;
+}
+
+// One ranked spelling-correction candidate for a single word: the candidate
+// word itself, its Damerau-Levenshtein edit distance from the input, and its
+// frequency (corpus occurrence count) in the bundled dictionary — higher
+// frequency means a more common, generally more likely, word.
+message WordCandidate {
+  string word = 1;
+  int32 edit_distance = 2;
+  int64 frequency = 3;
+}
+
+// Ranked correction candidates for a single misspelled (or correctly
+// spelled) word, closest and most frequent first.
+message WordCorrection {
+  string input = 1;
+  repeated WordCandidate candidates = 2;
+  // Set (non-empty) instead of raising when the request is malformed —
+  // e.g. blank text, text containing whitespace, or an out-of-range
+  // max_edit_distance/top_n. All other fields are zero-valued when set.
+  string error = 3;
+}
+
+// The single best full-phrase correction: every word corrected in context
+// (using bundled bigram frequencies to pick the contextually likeliest
+// correction), including words that were incorrectly merged or split by
+// wrong/missing spaces. `edit_distance` is the total edit distance summed
+// across the whole phrase.
+message PhraseCorrection {
+  string input = 1;
+  string corrected = 2;
+  int32 edit_distance = 3;
+  // Set (non-empty) instead of raising when the request is malformed —
+  // e.g. blank text or an out-of-range max_edit_distance. All other
+  // fields are zero-valued when set.
+  string error = 4;
+}
+
+// A run-together (or badly spaced) string split into words, with spelling
+// errors in the individual words corrected along the way. `edit_distance` is
+// the total edit distance summed across all segments; `log_probability` is
+// the summed log-likelihood of the chosen segmentation under the bundled
+// dictionary (higher/less negative = more probable) — useful for comparing
+// alternative segmentations of the same input.
+message SegmentationResult {
+  string input = 1;
+  string segmented = 2;
+  int32 edit_distance = 3;
+  double log_probability = 4;
+  // Set (non-empty) instead of raising when the request is malformed —
+  // e.g. blank text or an out-of-range max_edit_distance/max_segment_length.
+  // All other fields are zero-valued when set.
+  string error = 5;
+}
+
+// Whether a single word is present in the bundled dictionary verbatim (no
+// fuzzy matching), and if so, how frequent it is. A fast existence check —
+// distinct from CorrectWord, which searches for near-miss candidates.
+message WordCheck {
+  string word = 1;
+  bool known = 2;
+  int64 frequency = 3;
+  // Set (non-empty) instead of raising when the request is malformed —
+  // e.g. blank text or text containing whitespace. All other fields are
+  // zero-valued when set.
+  string error = 4;
+}
+
+// One word from a phrase that was NOT found in the dictionary, its position
+// (0-based token index) in the phrase, and ranked correction candidates for
+// it (same shape CorrectWord returns).
+message FlaggedWord {
+  string word = 1;
+  int32 index = 2;
+  repeated WordCandidate suggestions = 3;
+}
+
+// A phrase tokenized and checked word-by-word, flagging every token not
+// found in the dictionary (with suggestions for each) without forcing a
+// single auto-corrected rewrite — the "spellcheck as you type" shape, as
+// opposed to PhraseCorrection's single committed rewrite.
+message MisspellingReport {
+  string input = 1;
+  repeated FlaggedWord flagged = 2;
+  int32 word_count = 3;
+  // Set (non-empty) instead of raising when the request is malformed —
+  // e.g. blank text or an out-of-range max_edit_distance/top_n. All other
+  // fields are zero-valued when set.
+  string error = 4;
+}

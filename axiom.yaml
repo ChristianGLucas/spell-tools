@@ -1,0 +1,100 @@
+name: christiangeorgelucas/spell-tools
+version: 0.1.0
+language: python
+description: >-
+  Composable Axiom dictionary-based spell-correction and word-segmentation
+  nodes wrapping the MIT-licensed symspellpy (Wolf Garbe's SymSpell
+  algorithm), with its bundled MIT-licensed English frequency and bigram
+  dictionaries (82,765 words / 243,342 word pairs) loaded from this repo — no
+  runtime download. Correct a single misspelled word to its most likely
+  intended word(s), correct a whole phrase including compound errors and
+  missing/extra spaces, segment a run-together string into words, check
+  whether a word exists in the dictionary, and flag every misspelled word in
+  a phrase with per-word suggestions. Distinct from fuzzy-match-tools
+  (pairwise string similarity between two given strings, no dictionary) and
+  phonetic-tools (sound-alike encoding, no correction) — this package
+  corrects against a real word-frequency dictionary. Offline, deterministic,
+  and bounded.
+license: MIT
+author: Christian George Lucas
+tags:
+  - spell-correction
+  - spellcheck
+  - symspell
+  - word-segmentation
+  - typo-correction
+  - dictionary
+  - text
+nodes:
+    - name: CorrectWord
+      input: SpellQuery
+      output: WordCorrection
+      description: >-
+        Correct a single misspelled word to its most likely intended
+        word(s). Looks up `text` (a single token — no whitespace) against
+        the bundled SymSpell frequency dictionary and returns up to `top_n`
+        candidates (default 5, max 20) whose Damerau-Levenshtein edit
+        distance from the input is at most `max_edit_distance` (0-2, default
+        2), ranked closest-and-most-frequent first — e.g. "hte" -> "the". A
+        correctly spelled word still returns itself as the first
+        (distance-0) candidate. Matching is case-insensitive; candidates are
+        returned in lowercase dictionary form. Deterministic; blank,
+        multi-word, or oversized (>100 char) input returns a structured
+        error instead of crashing.
+    - name: CorrectPhrase
+      input: SpellQuery
+      output: PhraseCorrection
+      description: >-
+        Correct an entire phrase or sentence, including compound errors —
+        multiple misspelled words, and a single missing/extra space that
+        merges or splits exactly two adjacent words (e.g. "the qick brown
+        fox jum ped" -> "the quick brown fox jumped"; "whereis the exit" ->
+        "where is the exit"). Uses SymSpell's compound-aware lookup with the
+        bundled bigram dictionary for context, so each word is corrected in
+        light of its neighbors rather than in isolation. Does NOT reliably
+        reconstruct a multi-word run-together blob (three or more merged
+        words) within max_edit_distance — use SegmentText for that.
+        `max_edit_distance` (0-2, default 2) bounds the per-word correction
+        distance; `edit_distance` in the result is the total summed across
+        the whole phrase. Sentence casing (e.g. a capitalized first word) is
+        preserved in `corrected`. Deterministic; blank or oversized (>2000
+        char) input returns a structured error instead of crashing.
+    - name: SegmentText
+      input: SpellQuery
+      output: SegmentationResult
+      description: >-
+        Segment a run-together string into its constituent words (e.g.
+        "thequickbrownfox" -> "the quick brown fox"), correcting spelling
+        errors in the individual words along the way. Finds the split into
+        dictionary words that minimizes total edit distance weighted by word
+        frequency. `max_edit_distance` (0-2, default 2) bounds the per-word
+        correction distance; `max_segment_length` (default 20, max 50) caps
+        how long any single split-out word may be. `edit_distance` is the
+        total summed across every segment; `log_probability` is the summed
+        log-likelihood of the chosen split (less negative = more probable).
+        Original casing is preserved. Deterministic; blank or oversized
+        (>1000 char) input returns a structured error instead of crashing.
+    - name: CheckWord
+      input: SpellQuery
+      output: WordCheck
+      description: >-
+        Check whether a single word (`text` — no whitespace) exists
+        verbatim in the bundled dictionary, and if so, its corpus frequency.
+        A fast, exact, case-insensitive existence check — no fuzzy matching,
+        no candidate search — distinct from CorrectWord, which always
+        searches for near-miss suggestions whether or not the word is known.
+        Deterministic; blank or multi-word input returns a structured error
+        instead of crashing.
+    - name: FindMisspellings
+      input: SpellQuery
+      output: MisspellingReport
+      description: >-
+        Tokenize a phrase and flag every word not found in the bundled
+        dictionary, each with up to `top_n` ranked correction candidates
+        within `max_edit_distance` — the "spellcheck as you type" shape, as
+        opposed to CorrectPhrase's single committed rewrite. Tokens are
+        alphabetic words (letters/apostrophes only; punctuation and digits
+        are separators, not spelling errors); `index` on each flagged word
+        is its 0-based position among the phrase's word tokens. Matching is
+        case-insensitive. Deterministic; blank or oversized (>2000 char)
+        input returns a structured error instead of crashing.

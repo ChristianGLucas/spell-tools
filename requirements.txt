@@ -1,0 +1,2 @@
+# Add your Python runtime dependencies here, one per line.
+symspellpy==6.10.0
