@@ -3,10 +3,20 @@
 Composable [Axiom](https://axiom.dev) nodes for **dictionary-based spell
 correction and word segmentation**, wrapping the MIT-licensed
 [symspellpy](https://github.com/mammothb/symspellpy) — the Python port of
-Wolf Garbe's SymSpell algorithm — with its bundled MIT-licensed English
-frequency and bigram dictionaries (82,765 words / 243,342 word pairs) copied
-into this repo's `data/` directory. No runtime download; the dictionaries
-ship in the image. Offline, deterministic, and bounded.
+Wolf Garbe's SymSpell algorithm — with its bundled English frequency and
+bigram dictionaries (82,765 words / 243,342 word pairs) copied into this
+repo's `data/` directory (byte-identical to the copies symspellpy itself
+ships on PyPI). No runtime download; the dictionaries ship in the image.
+Offline, deterministic, and bounded.
+
+**Dictionary attribution:** the dictionary files are redistributed under
+symspellpy's MIT license. The underlying word-frequency data is in turn
+derived from the [Google Books Ngram
+dataset](https://storage.googleapis.com/books/ngrams/books/datasetsv3.html)
+(CC BY 3.0 Unported) and [SCOWL](http://wordlist.aspell.net/), per
+[SymSpell's own documented sources](https://github.com/wolfgarbe/SymSpell) —
+attribution: *"Ngram data from the Google Books Ngram Viewer, used under CC
+BY 3.0."*
 
 Built for the Axiom marketplace under the handle `christiangeorgelucas`.
 
@@ -66,5 +76,6 @@ curl localhost:8083/nodes/SegmentText -d '{"text":"thequickbrownfox"}'
 ## License
 
 MIT © 2026 Christian George Lucas. Wraps symspellpy (MIT), including its
-bundled MIT-licensed frequency and bigram dictionaries (originally from Wolf
-Garbe's SymSpell project).
+bundled frequency and bigram dictionaries (redistributed under symspellpy's
+MIT license, originally from Wolf Garbe's SymSpell project; see "Dictionary
+attribution" above for the underlying data's own CC BY 3.0 / SCOWL sourcing).

@@ -4,9 +4,13 @@ language: python
 description: >-
   Composable Axiom dictionary-based spell-correction and word-segmentation
   nodes wrapping the MIT-licensed symspellpy (Wolf Garbe's SymSpell
-  algorithm), with its bundled MIT-licensed English frequency and bigram
-  dictionaries (82,765 words / 243,342 word pairs) loaded from this repo — no
-  runtime download. Correct a single misspelled word to its most likely
+  algorithm), with its bundled English frequency and bigram dictionaries
+  (82,765 words / 243,342 word pairs) copied into this repo — no runtime
+  download. The dictionary files are redistributed under symspellpy's MIT
+  LICENSE (byte-identical to the copies symspellpy ships on PyPI); the
+  underlying word-frequency data is in turn derived from Google Books
+  Ngram (CC BY 3.0 Unported) and SCOWL, per SymSpell's own documented
+  sources — see README.md for the attribution note. Correct a single misspelled word to its most likely
   intended word(s), correct a whole phrase including compound errors and
   missing/extra spaces, segment a run-together string into words, check
   whether a word exists in the dictionary, and flag every misspelled word in

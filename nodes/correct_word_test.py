@@ -56,6 +56,8 @@ def test_max_edit_distance_zero_only_exact_match():
 
 def test_no_candidates_within_distance_returns_empty_not_error():
     r = correct_word(AX, SpellQuery(text="the", max_edit_distance=0, top_n=1))
+    assert r.error == ""
+    assert len(r.candidates) == 1
     # a nonsense word far from any dictionary word within distance 0/1
     r2 = correct_word(AX, SpellQuery(text="zzxxqqxyzzyplugh", max_edit_distance=1))
     assert r2.error == ""
