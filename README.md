@@ -1,6 +1,6 @@
 # spell-tools
 
-Composable [Axiom](https://axiom.dev) nodes for **dictionary-based spell
+Composable [Axiom](https://axiomide.com) nodes for **dictionary-based spell
 correction and word segmentation**, wrapping the MIT-licensed
 [symspellpy](https://github.com/mammothb/symspellpy) — the Python port of
 Wolf Garbe's SymSpell algorithm — with its bundled English frequency and
