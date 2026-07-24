@@ -81,9 +81,9 @@ def test_blank_text_is_structured_error():
     assert r2.error != ""
 
 
-def test_oversized_text_is_structured_error():
+def test_large_text_no_crash():
     r = correct_phrase(AX, SpellQuery(text="a " * 1001))
-    assert r.error != ""
+    assert r.error == ""
 
 
 def test_out_of_range_max_edit_distance_is_structured_error():

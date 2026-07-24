@@ -6,7 +6,6 @@ from nodes.lib import (
     resolve_max_edit_distance,
     resolve_max_segment_length,
     get_symspell,
-    MAX_SEGMENT_LEN,
 )
 
 
@@ -21,12 +20,12 @@ def segment_text(ax: AxiomContext, input: SpellQuery) -> SegmentationResult:
     may be. `edit_distance` in the result is the total edit distance summed
     across every segment; `log_probability` is the summed log-likelihood of
     the chosen split (less negative = more probable), useful for comparing
-    alternative segmentations. Deterministic; blank or oversized input
-    returns a structured error instead of crashing (the underlying library
-    raises on an empty string — this node guards that boundary itself).
+    alternative segmentations. Deterministic; blank input returns a
+    structured error instead of crashing (the underlying library raises on
+    an empty string — this node guards that boundary itself).
     """
     try:
-        text = check_text(input.text, MAX_SEGMENT_LEN, "text")
+        text = check_text(input.text, "text")
         max_edit_distance = resolve_max_edit_distance(input)
         max_segment_length = resolve_max_segment_length(input)
     except RequestError as e:

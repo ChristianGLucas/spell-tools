@@ -61,9 +61,9 @@ def test_blank_text_is_structured_error():
     assert r2.error != ""
 
 
-def test_oversized_text_is_structured_error():
+def test_large_text_no_crash():
     r = find_misspellings(AX, SpellQuery(text="a " * 1001))
-    assert r.error != ""
+    assert r.error == ""
 
 
 def test_deterministic_across_repeated_invocations():

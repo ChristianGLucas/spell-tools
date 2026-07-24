@@ -20,28 +20,17 @@ from symspellpy import SymSpell, Verbosity
 
 from gen.messages_pb2 import WordCandidate
 
-# ── Input bounds (fire on the RAW input, before any allocation/compute) ───────
-# Sized so every node finishes well inside the synchronous invocation budget
-# on realistic input while refusing pathological payloads deterministically.
-# Cost scales roughly linearly with input length for this library (measured
-# locally: ~0.6ms/char for word_segmentation, ~1.3ms/char for lookup_compound
-# on adversarial no-space/high-edit input), so these caps bound wall time to
-# low single-digit seconds even on the platform's ~1 vCPU deployment target.
-MAX_WORD_LEN = 100          # CorrectWord / CheckWord: a single token
-MAX_PHRASE_LEN = 2_000       # CorrectPhrase / FindMisspellings: a sentence/paragraph
-MAX_SEGMENT_LEN = 1_000      # SegmentText: a run-together string
-
 # SymSpell is initialized with this as its compiled-in maximum; a caller
 # cannot request a larger max_edit_distance than this (the library raises
-# ValueError "distance too large" if asked to, which we pre-empt).
+# ValueError "distance too large" if asked to, which we pre-empt). This is
+# an algorithm-correctness bound (baked into the SymSpell instance itself
+# at construction), not a payload/DoS one, so it stays.
 MAX_EDIT_DISTANCE = 2
 DEFAULT_EDIT_DISTANCE = 2
 
 DEFAULT_TOP_N = 5
-MAX_TOP_N = 20
 
 DEFAULT_SEGMENT_WORD_LEN = 20
-MAX_SEGMENT_WORD_LEN = 50
 
 _DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 _DICT_PATH = os.path.join(_DATA_DIR, "frequency_dictionary_en_82_765.txt")
@@ -74,13 +63,11 @@ def get_symspell() -> SymSpell:
 
 # ── Validation ──────────────────────────────────────────────────────────────
 
-def check_text(text: str, max_len: int, label: str = "text") -> str:
-    """Reject blank/whitespace-only or oversized text. Returns the input
-    unchanged (never mutated) so callers can chain this in an expression."""
+def check_text(text: str, label: str = "text") -> str:
+    """Reject blank/whitespace-only text. Returns the input unchanged (never
+    mutated) so callers can chain this in an expression."""
     if not text or not text.strip():
         raise RequestError(f"{label} must not be blank")
-    if len(text) > max_len:
-        raise RequestError(f"{label} exceeds the {max_len}-character limit ({len(text)})")
     return text
 
 
@@ -88,7 +75,7 @@ def check_single_token(text: str, label: str = "text") -> str:
     """Reject text containing whitespace — CorrectWord/CheckWord operate on
     exactly one token; a caller who wants phrase-level correction should use
     CorrectPhrase or FindMisspellings instead."""
-    check_text(text, MAX_WORD_LEN, label)
+    check_text(text, label)
     if re.search(r"\s", text):
         raise RequestError(
             f"{label} must be a single word with no whitespace "
@@ -112,8 +99,8 @@ def resolve_top_n(input_msg) -> int:
     if not input_msg.HasField("top_n"):
         return DEFAULT_TOP_N
     v = input_msg.top_n
-    if v < 1 or v > MAX_TOP_N:
-        raise RequestError(f"top_n must be between 1 and {MAX_TOP_N} (got {v})")
+    if v < 1:
+        raise RequestError(f"top_n must be at least 1 (got {v})")
     return v
 
 
@@ -121,10 +108,8 @@ def resolve_max_segment_length(input_msg) -> int:
     if not input_msg.HasField("max_segment_length"):
         return DEFAULT_SEGMENT_WORD_LEN
     v = input_msg.max_segment_length
-    if v < 1 or v > MAX_SEGMENT_WORD_LEN:
-        raise RequestError(
-            f"max_segment_length must be between 1 and {MAX_SEGMENT_WORD_LEN} (got {v})"
-        )
+    if v < 1:
+        raise RequestError(f"max_segment_length must be at least 1 (got {v})")
     return v
 
 

@@ -79,9 +79,9 @@ def test_multi_word_text_is_structured_error():
     assert "single word" in r.error
 
 
-def test_oversized_text_is_structured_error():
+def test_large_token_no_crash():
     r = correct_word(AX, SpellQuery(text="a" * 101))
-    assert r.error != ""
+    assert r.error == ""
 
 
 def test_out_of_range_max_edit_distance_is_structured_error():
@@ -96,8 +96,10 @@ def test_out_of_range_top_n_is_structured_error():
     r = correct_word(AX, SpellQuery(text="hte", top_n=0))
     assert r.error != ""
 
+
+def test_large_top_n_no_crash():
     r2 = correct_word(AX, SpellQuery(text="hte", top_n=21))
-    assert r2.error != ""
+    assert r2.error == ""
 
 
 def test_deterministic_across_repeated_invocations():

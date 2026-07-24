@@ -5,7 +5,6 @@ from nodes.lib import (
     check_text,
     resolve_max_edit_distance,
     get_symspell,
-    MAX_PHRASE_LEN,
 )
 
 
@@ -27,11 +26,11 @@ def correct_phrase(ax: AxiomContext, input: SpellQuery) -> PhraseCorrection:
     capitalized sentence-initial word stays capitalized in `corrected`) via
     SymSpell's case-transfer option, so matching is effectively
     case-insensitive without flattening the output to lowercase.
-    Deterministic; blank or oversized input returns a structured error
-    instead of crashing.
+    Deterministic; blank input returns a structured error instead of
+    crashing.
     """
     try:
-        text = check_text(input.text, MAX_PHRASE_LEN, "text")
+        text = check_text(input.text, "text")
         max_edit_distance = resolve_max_edit_distance(input)
     except RequestError as e:
         return PhraseCorrection(error=str(e))

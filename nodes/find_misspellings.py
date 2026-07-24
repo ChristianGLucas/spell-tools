@@ -10,7 +10,6 @@ from nodes.lib import (
     get_symspell,
     tokenize,
     to_candidates,
-    MAX_PHRASE_LEN,
 )
 
 
@@ -22,11 +21,11 @@ def find_misspellings(ax: AxiomContext, input: SpellQuery) -> MisspellingReport:
     alphabetic words (letters and apostrophes only); punctuation and digits
     are separators, not spelling errors. `index` on each flagged word is its
     0-based position among the phrase's word tokens. The membership check is
-    case-insensitive. Deterministic; blank or oversized input returns a
-    structured error instead of crashing.
+    case-insensitive. Deterministic; blank input returns a structured error
+    instead of crashing.
     """
     try:
-        text = check_text(input.text, MAX_PHRASE_LEN, "text")
+        text = check_text(input.text, "text")
         max_edit_distance = resolve_max_edit_distance(input)
         top_n = resolve_top_n(input)
     except RequestError as e:

@@ -52,9 +52,9 @@ def test_blank_text_is_structured_error_not_a_crash():
     assert r2.error != ""
 
 
-def test_oversized_text_is_structured_error():
+def test_large_text_no_crash():
     r = segment_text(AX, SpellQuery(text="a" * 1001))
-    assert r.error != ""
+    assert r.error == ""
 
 
 def test_out_of_range_max_edit_distance_is_structured_error():
@@ -66,8 +66,10 @@ def test_out_of_range_max_segment_length_is_structured_error():
     r = segment_text(AX, SpellQuery(text="thequickbrownfox", max_segment_length=0))
     assert r.error != ""
 
-    r2 = segment_text(AX, SpellQuery(text="thequickbrownfox", max_segment_length=51))
-    assert r2.error != ""
+
+def test_large_max_segment_length_no_crash():
+    r = segment_text(AX, SpellQuery(text="thequickbrownfox", max_segment_length=51))
+    assert r.error == ""
 
 
 def test_deterministic_across_repeated_invocations():
